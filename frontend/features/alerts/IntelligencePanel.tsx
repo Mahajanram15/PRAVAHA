@@ -552,7 +552,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                   NO RELIABLE ROUTE WARNING
                 </div>
                 <div className="text-[10px] text-rose-300 font-bold">
-                  "No reliable evacuation route found. Manual intervention required."
+                  &quot;No reliable evacuation route found. Manual intervention required.&quot;
                 </div>
                 <div className="text-[9px] text-rose-400/80">
                   Affected clusters: {state.no_reliable_route_clusters?.join(", ")}
