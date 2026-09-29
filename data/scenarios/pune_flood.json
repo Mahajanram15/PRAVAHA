@@ -1,0 +1,309 @@
+{
+  "scenario_id": "pune-monsoon-flood-2026",
+  "name": "Pune Monsoon Mutha River Inundation",
+  "district": "Pune Urban",
+  "description": "Simulated heavy cloudburst upstream at Khadakwasla Catchment causing 45,000 cusecs discharge into Mutha River basin, threatening low-lying urban sectors.",
+  "is_simulated": true,
+  "disclaimer": "DEMO MODE · SIMULATED DATA",
+  "created_at": "2026-09-27T19:00:00Z",
+  "weather_summary": {
+    "rainfall_24h_mm": 184.5,
+    "river_discharge_cusecs": 45200,
+    "dam_level_pct": 98.4,
+    "trend": "RISING"
+  },
+  "hazard_zones": [
+    {
+      "id": "hz-mutha-riverbank",
+      "name": "Mutha Riverbank Inundation Corridor",
+      "severity": "CRITICAL",
+      "water_level_m": 2.8,
+      "flow_velocity_mps": 2.4,
+      "risk_score": 92.0,
+      "confidence_score": 88.0,
+      "polygon_coordinates": [
+        [73.8210, 18.4710],
+        [73.8285, 18.4840],
+        [73.8365, 18.5010],
+        [73.8420, 18.5135],
+        [73.8485, 18.5215],
+        [73.8640, 18.5315],
+        [73.8675, 18.5290],
+        [73.8525, 18.5170],
+        [73.8445, 18.5080],
+        [73.8345, 18.4940],
+        [73.8265, 18.4770],
+        [73.8210, 18.4710]
+      ],
+      "contributing_factors": [
+        {"name": "Catchment Rainfall", "value": "184mm / 24h", "contribution": 0.35, "description": "Continuous cloudburst in Western Ghats"},
+        {"name": "Elevation Deficiency", "value": "548m MSL", "contribution": 0.25, "description": "Active river floodplain depression"},
+        {"name": "Dam Outflow", "value": "45.2k cusecs", "contribution": 0.25, "description": "Khadakwasla spillway emergency discharge"},
+        {"name": "Ground Confirmation", "value": "7 reports", "contribution": 0.15, "description": "Multiple ground team confirmations"}
+      ],
+      "status": "ACTIVE",
+      "updated_at": "2026-09-27T19:30:00Z"
+    },
+    {
+      "id": "hz-sangam-confluence",
+      "name": "Sangamwadi Mula-Mutha Confluence Basin",
+      "severity": "CRITICAL",
+      "water_level_m": 3.1,
+      "flow_velocity_mps": 1.9,
+      "risk_score": 86.0,
+      "confidence_score": 82.0,
+      "polygon_coordinates": [
+        [73.8580, 18.5270],
+        [73.8710, 18.5375],
+        [73.8810, 18.5350],
+        [73.8735, 18.5240],
+        [73.8625, 18.5230],
+        [73.8580, 18.5270]
+      ],
+      "contributing_factors": [
+        {"name": "River Backwater Effect", "value": "Severe", "contribution": 0.40, "description": "Confluence flow bottleneck"},
+        {"name": "Ground Inundation", "value": "1.5m", "contribution": 0.35, "description": "Settlement level under water"},
+        {"name": "Sensor Telemetry", "value": "Station S-4", "contribution": 0.25, "description": "Water level beyond danger mark"}
+      ],
+      "status": "ACTIVE",
+      "updated_at": "2026-09-27T19:30:00Z"
+    },
+    {
+      "id": "hz-bavdhan-runoff",
+      "name": "Paud-Kothrud Western Buffer Zone",
+      "severity": "CAUTION",
+      "water_level_m": 0.4,
+      "flow_velocity_mps": 0.8,
+      "risk_score": 38.0,
+      "confidence_score": 75.0,
+      "polygon_coordinates": [
+        [73.7980, 18.5050],
+        [73.8120, 18.5180],
+        [73.8180, 18.5120],
+        [73.8050, 18.4990],
+        [73.7980, 18.5050]
+      ],
+      "contributing_factors": [
+        {"name": "Topographic Drainage", "value": "Good", "contribution": 0.50, "description": "High elevation natural gradient"},
+        {"name": "Runoff Velocity", "value": "Moderate", "contribution": 0.50, "description": "Local stormwater runoff"}
+      ],
+      "status": "MONITORING",
+      "updated_at": "2026-09-27T19:30:00Z"
+    }
+  ],
+  "roads": [
+    {
+      "id": "rd-sinhagad-low",
+      "name": "Sinhagad Road (Rajaram to Dandekar Brg)",
+      "status": "BLOCKED",
+      "capacity_vph": 2400,
+      "current_load_vph": 120,
+      "hazard_exposure": 0.95,
+      "is_blocked": true,
+      "closure_reason": "1.2m standing flood water across 800m carriage-way. Traffic halted.",
+      "coordinates": [
+        [73.8245, 18.4810],
+        [73.8320, 18.4920],
+        [73.8380, 18.5020],
+        [73.8435, 18.5100]
+      ],
+      "length_km": 3.8
+    },
+    {
+      "id": "rd-karve-paud",
+      "name": "Karve Road - Paud Elevated Corridor",
+      "status": "NORMAL",
+      "capacity_vph": 2800,
+      "current_load_vph": 1320,
+      "hazard_exposure": 0.12,
+      "is_blocked": false,
+      "closure_reason": null,
+      "coordinates": [
+        [73.8420, 18.5150],
+        [73.8310, 18.5110],
+        [73.8200, 18.5080],
+        [73.8090, 18.5030]
+      ],
+      "length_km": 4.1
+    },
+    {
+      "id": "rd-jm-fc-spine",
+      "name": "JM Road / FC Road Shivajinagar Spine",
+      "status": "CAUTION",
+      "capacity_vph": 2400,
+      "current_load_vph": 1850,
+      "hazard_exposure": 0.38,
+      "is_blocked": false,
+      "closure_reason": null,
+      "coordinates": [
+        [73.8435, 18.5170],
+        [73.8470, 18.5250],
+        [73.8510, 18.5320]
+      ],
+      "length_km": 2.1
+    },
+    {
+      "id": "rd-pune-satara",
+      "name": "Pune-Satara Highway Connector",
+      "status": "NORMAL",
+      "capacity_vph": 3200,
+      "current_load_vph": 1420,
+      "hazard_exposure": 0.08,
+      "is_blocked": false,
+      "closure_reason": null,
+      "coordinates": [
+        [73.8570, 18.5010],
+        [73.8560, 18.4880],
+        [73.8540, 18.4720]
+      ],
+      "length_km": 3.4
+    },
+    {
+      "id": "rd-tilak-shastri",
+      "name": "Tilak Road - Shastri Corridor",
+      "status": "CONGESTED",
+      "capacity_vph": 1800,
+      "current_load_vph": 1690,
+      "hazard_exposure": 0.48,
+      "is_blocked": false,
+      "closure_reason": null,
+      "coordinates": [
+        [73.8440, 18.5090],
+        [73.8490, 18.5060],
+        [73.8550, 18.5020]
+      ],
+      "length_km": 1.9
+    }
+  ],
+  "shelters": [
+    {
+      "id": "sh-kothrud-natya",
+      "name": "Kothrud Disaster Relief Center (Yashwantrao Chavan Complex)",
+      "latitude": 18.5025,
+      "longitude": 73.8075,
+      "total_capacity": 2500,
+      "current_occupancy": 640,
+      "status": "AVAILABLE",
+      "elevation_m": 582.0,
+      "amenities": ["Medical Bay", "Clean Drinking Water", "Emergency Generator", "Comm Radio"],
+      "contact_number": "+91-20-2544-0101"
+    },
+    {
+      "id": "sh-mit-sports",
+      "name": "MIT Paud Road Evacuation Complex",
+      "latitude": 18.5178,
+      "longitude": 73.8152,
+      "total_capacity": 1800,
+      "current_occupancy": 410,
+      "status": "AVAILABLE",
+      "elevation_m": 579.5,
+      "amenities": ["Indoor Arena", "First Aid", "Food Stock 72h"],
+      "contact_number": "+91-20-2544-0202"
+    },
+    {
+      "id": "sh-sarasbaug",
+      "name": "Saras Baug Emergency Coordination Ground",
+      "latitude": 18.5012,
+      "longitude": 73.8558,
+      "total_capacity": 3000,
+      "current_occupancy": 2480,
+      "status": "LIMITED",
+      "elevation_m": 566.0,
+      "amenities": ["Field Kitchen", "Ambulance Station", "Sanitation Units"],
+      "contact_number": "+91-20-2444-0303"
+    },
+    {
+      "id": "sh-sp-college",
+      "name": "SP College Pavilion & Relief Shelter, Sadashiv Peth",
+      "latitude": 18.5085,
+      "longitude": 73.8498,
+      "total_capacity": 1200,
+      "current_occupancy": 1130,
+      "status": "NEAR_CAPACITY",
+      "elevation_m": 564.2,
+      "amenities": ["Basic First Aid", "Dry Rations"],
+      "contact_number": "+91-20-2444-0404"
+    }
+  ],
+  "population_zones": [
+    {
+      "id": "pop-ekta-nagar",
+      "name": "Ekta Nagari / Vitthalwadi Riverbank",
+      "latitude": 18.4840,
+      "longitude": 73.8280,
+      "estimated_population": 4200,
+      "vulnerability_level": "HIGH",
+      "evacuation_urgency": "IMMEDIATE",
+      "assigned_shelter_id": "sh-kothrud-natya",
+      "assigned_route_id": "rd-karve-paud"
+    },
+    {
+      "id": "pop-pulachi-wadi",
+      "name": "Pulachi Wadi / Z-Bridge Lowlands",
+      "latitude": 18.5155,
+      "longitude": 73.8430,
+      "estimated_population": 1850,
+      "vulnerability_level": "HIGH",
+      "evacuation_urgency": "IMMEDIATE",
+      "assigned_shelter_id": "sh-mit-sports",
+      "assigned_route_id": "rd-karve-paud"
+    },
+    {
+      "id": "pop-sangamwadi",
+      "name": "Sangamwadi Confluence Settlement",
+      "latitude": 18.5310,
+      "longitude": 73.8655,
+      "estimated_population": 2300,
+      "vulnerability_level": "HIGH",
+      "evacuation_urgency": "IMMEDIATE",
+      "assigned_shelter_id": "sh-sarasbaug",
+      "assigned_route_id": "rd-jm-fc-spine"
+    },
+    {
+      "id": "pop-sadashiv-low",
+      "name": "Sadashiv Peth / Shastri Rd Fringe",
+      "latitude": 18.5070,
+      "longitude": 73.8460,
+      "estimated_population": 1400,
+      "vulnerability_level": "MEDIUM",
+      "evacuation_urgency": "PREPARE",
+      "assigned_shelter_id": "sh-sarasbaug",
+      "assigned_route_id": "rd-tilak-shastri"
+    }
+  ],
+  "ground_reports": [
+    {
+      "id": "rep-001",
+      "timestamp": "2026-09-27T19:15:00Z",
+      "latitude": 18.4835,
+      "longitude": 73.8275,
+      "report_type": "WATERLOGGING",
+      "severity": "HIGH",
+      "description": "Mutha river breached retaining wall near Vitthalwadi temple. Water rushing into ground floors of residential societies.",
+      "verified": true,
+      "confidence_impact": 0.15
+    },
+    {
+      "id": "rep-002",
+      "timestamp": "2026-09-27T19:22:00Z",
+      "latitude": 18.5020,
+      "longitude": 73.8380,
+      "report_type": "ROAD_BLOCKED",
+      "severity": "HIGH",
+      "description": "Sinhagad Road completely impassable between Rajaram Bridge and Dandekar Bridge. Multiple submerged cars.",
+      "verified": true,
+      "confidence_impact": 0.20
+    },
+    {
+      "id": "rep-003",
+      "timestamp": "2026-09-27T19:28:00Z",
+      "latitude": 18.5305,
+      "longitude": 73.8650,
+      "report_type": "STRANDED_PEOPLE",
+      "severity": "HIGH",
+      "description": "Approx 80 residents stranded at Sangamwadi community hall upper floor. Evacuation boats requested.",
+      "verified": true,
+      "confidence_impact": 0.18
+    }
+  ]
+}
