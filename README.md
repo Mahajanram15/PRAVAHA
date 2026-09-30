@@ -224,7 +224,6 @@ python test_phase4_demo.py
 Developed with ❤️ for the Hackathon by Team PRAVAHA.
 
 - **Repository**: [https://github.com/Mahajanram15/PRAVAHA](https://github.com/Mahajanram15/PRAVAHA)
-- **License**: MIT License
 
 ---
 
