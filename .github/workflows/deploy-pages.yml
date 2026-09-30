@@ -35,6 +35,7 @@ jobs:
         working-directory: ./frontend
         env:
           NEXT_PUBLIC_BASE_PATH: /PRAVAHA
+          NEXT_PUBLIC_API_URL: https://pravaha-backend-2t12.onrender.com/api
         run: npm run build
 
       - name: Upload Pages Artifact

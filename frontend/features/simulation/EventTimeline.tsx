@@ -6,15 +6,13 @@ import {
   Pause,
   RotateCcw,
   Clock,
-  AlertTriangle,
   ChevronRight,
   ChevronLeft,
   CheckCircle2,
-  Sparkles,
-  Zap
+  Activity
 } from "lucide-react";
 import { SimulationState } from "@/types/simulation";
-import { DEMO_SCENARIO_STEPS, DemoStep } from "@/lib/demoScenario";
+import { DEMO_SCENARIO_STEPS } from "@/lib/demoScenario";
 
 interface EventTimelineProps {
   state: SimulationState;
@@ -42,24 +40,24 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
   const currentStep = DEMO_SCENARIO_STEPS[Math.max(0, Math.min(demoStep, DEMO_SCENARIO_STEPS.length - 1))];
 
   return (
-    <footer className="h-16 bg-slate-950 border-t border-slate-800 px-3 md:px-4 flex items-center justify-between z-20 shrink-0 select-none">
+    <footer className="h-14 bg-slate-950/95 border-t border-slate-800/80 px-3 md:px-5 flex items-center justify-between z-20 shrink-0 select-none backdrop-blur-md">
       {/* Left: Demo Playback Controls */}
       <div className="flex items-center space-x-2 shrink-0">
         <button
           onClick={onToggleDemo}
           disabled={isResetting}
           id="btn-timeline-play-demo"
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-mono font-bold transition-all shadow-sm ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all shadow-md active:scale-95 ${
             isDemoPlaying
-              ? "bg-amber-500 text-slate-950 hover:bg-amber-400 animate-pulse"
-              : "bg-sky-600 hover:bg-sky-500 text-white"
+              ? "bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-amber-500/20 animate-pulse"
+              : "bg-sky-600 hover:bg-sky-500 text-white shadow-sky-600/30"
           }`}
-          title={isDemoPlaying ? "Pause Demo Scenario" : "Run One-Click Demo Scenario (2-3 min)"}
+          title={isDemoPlaying ? "Pause Demo Scenario" : "Auto-Run Continuous Demo Scenario"}
         >
           {isDemoPlaying ? (
             <>
               <Pause className="w-3.5 h-3.5 fill-current" />
-              <span>PAUSE DEMO</span>
+              <span>PAUSE</span>
             </>
           ) : (
             <>
@@ -74,8 +72,8 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
             onClick={onPrevStep}
             disabled={demoStep <= 0 || isResetting}
             id="btn-timeline-prev"
-            className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 text-slate-300 disabled:opacity-40 transition-colors"
-            title="Previous Demo Step"
+            className="p-1.5 rounded-md bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 text-slate-300 disabled:opacity-30 transition-all active:scale-95"
+            title="Previous Step"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
@@ -84,26 +82,21 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
             onClick={onNextStep}
             disabled={demoStep >= DEMO_SCENARIO_STEPS.length - 1 || isResetting}
             id="btn-timeline-next"
-            className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 text-slate-300 disabled:opacity-40 transition-colors"
-            title="Next Demo Step"
+            className="p-1.5 rounded-md bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 text-slate-300 disabled:opacity-30 transition-all active:scale-95"
+            title="Next Step"
           >
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="hidden xl:flex items-center space-x-1.5 pl-2 border-l border-slate-800 text-[11px] font-mono text-slate-400">
+        <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-900/70 border border-slate-800/80 text-[11px] font-mono">
           <Clock className="w-3.5 h-3.5 text-sky-400" />
           <span className="text-emerald-400 font-bold">{state.system_state.sim_time}</span>
-          {currentStep && (
-            <span className="text-slate-300 truncate max-w-[200px] hidden 2xl:inline">
-              · {currentStep.shortLabel}
-            </span>
-          )}
         </div>
       </div>
 
-      {/* Center: Interactive Demo Scenario Milestones */}
-      <div className="hidden lg:flex items-center space-x-1 text-[10.5px] font-mono overflow-x-auto py-1 max-w-[50vw]">
+      {/* Center: Interactive Milestones (Uncapped width so T+60 is never cut off) */}
+      <div className="flex-1 flex items-center justify-center space-x-1.5 text-[11px] font-mono overflow-x-auto py-1 px-2 mx-2">
         {DEMO_SCENARIO_STEPS.map((step) => {
           const isCurrent = demoStep === step.id;
           const isCompleted = demoStep > step.id;
@@ -112,44 +105,42 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({
             <button
               key={step.id}
               onClick={() => onJumpToStep(step.id)}
-              className={`flex items-center space-x-1 px-2 py-1 rounded transition-all shrink-0 border ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all shrink-0 border text-xs ${
                 isCurrent
-                  ? "bg-sky-950/90 border-sky-500 text-sky-200 font-bold shadow-sm ring-1 ring-sky-500/50"
+                  ? "bg-sky-500/15 border-sky-400 text-sky-200 font-bold shadow-sm shadow-sky-500/20 ring-1 ring-sky-400/50 scale-[1.02]"
                   : isCompleted
-                  ? "bg-emerald-950/40 border-emerald-800/80 text-emerald-300 hover:bg-emerald-950/60"
-                  : "bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                  ? "bg-emerald-950/30 border-emerald-800/60 text-emerald-300 hover:bg-emerald-950/50"
+                  : "bg-slate-900/50 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
               }`}
               title={`${step.timeCode}: ${step.actionTitle}\n${step.description}`}
             >
               {isCompleted ? (
-                <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               ) : isCurrent ? (
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping shrink-0" />
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+                </span>
               ) : (
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-700 shrink-0" />
               )}
-              <span className="truncate">{step.shortLabel}</span>
+              <span>{step.shortLabel}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Right: Demo Notice & Reset Button */}
-      <div className="flex items-center space-x-3 shrink-0">
-        <div className="hidden sm:flex items-center space-x-1.5 text-xs font-mono text-amber-400/90 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span className="font-semibold tracking-wider text-[10px]">DEMO MODE · SIMULATED DATA</span>
-        </div>
-
+      {/* Right: Reset Action */}
+      <div className="flex items-center space-x-2 shrink-0">
         <button
           onClick={onReset}
           disabled={isResetting}
           id="btn-timeline-reset"
-          className="flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-500 px-3 py-1.5 rounded text-xs font-mono transition-colors disabled:opacity-50"
-          title="Reset simulation to deterministic baseline"
+          className="flex items-center space-x-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-500 px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all active:scale-95 disabled:opacity-40"
+          title="Reset simulation to baseline"
         >
           <RotateCcw className={`w-3.5 h-3.5 text-sky-400 ${isResetting ? "animate-spin" : ""}`} />
-          <span className="font-semibold">RESET</span>
+          <span>RESET</span>
         </button>
       </div>
     </footer>

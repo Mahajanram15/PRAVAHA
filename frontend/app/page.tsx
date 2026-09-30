@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { TopStatusBar } from "@/components/layout/TopStatusBar";
 import { IntelligencePanel } from "@/features/alerts/IntelligencePanel";
 import { EventTimeline } from "@/features/simulation/EventTimeline";
 import {
-  fetchSimulationState,
-  resetSimulationState,
+  getScenarioStateForStep,
   applySimulationEvent,
-  fallbackPuneState
+  resetSimulationState
 } from "@/lib/api";
 import { SimulationState, SimEventType } from "@/types/simulation";
-import { DEMO_SCENARIO_STEPS, DemoStep } from "@/lib/demoScenario";
+import { DEMO_SCENARIO_STEPS } from "@/lib/demoScenario";
 
 // Dynamically load Leaflet InteractiveMap to avoid SSR issues
 const InteractiveMap = dynamic(
@@ -29,10 +28,9 @@ const InteractiveMap = dynamic(
 );
 
 export default function DashboardPage() {
-  const [state, setState] = useState<SimulationState>(fallbackPuneState);
+  const [demoStep, setDemoStep] = useState<number>(0);
   const [isResetting, setIsResetting] = useState<boolean>(false);
   const [isApplyingEvent, setIsApplyingEvent] = useState<boolean>(false);
-  const [demoStep, setDemoStep] = useState<number>(0);
   const [isDemoPlaying, setIsDemoPlaying] = useState<boolean>(false);
   const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -44,54 +42,29 @@ export default function DashboardPage() {
     id: null
   });
 
-  const loadData = useCallback(async () => {
-    const data = await fetchSimulationState();
-    if (data) {
-      setState(data);
-    }
-  }, []);
+  // ─────────────────────────────────────────────────────────────────
+  // SINGLE UNIFIED SOURCE OF TRUTH:
+  // Derived state directly from current demoStep (0 to 7)
+  // Guarantees 100% synchronization:
+  // DEMO BUTTON / TIMELINE CLICK -> CURRENT STEP -> SCENARIO STATE -> MAP + PANEL
+  // ─────────────────────────────────────────────────────────────────
+  const state: SimulationState = useMemo(() => {
+    return getScenarioStateForStep(demoStep);
+  }, [demoStep]);
 
-  useEffect(() => {
-    loadData();
-    // Poll backend every 4 seconds to sync simulation state
-    const timer = setInterval(() => {
-      loadData();
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [loadData]);
+  // Execute a specific demo step and sync
+  const executeDemoStep = useCallback((stepIndex: number) => {
+    const validStep = Math.max(0, Math.min(stepIndex, DEMO_SCENARIO_STEPS.length - 1));
+    setDemoStep(validStep);
 
-  // Execute a specific demo step with deterministic progressive cumulative state
-  const executeDemoStep = useCallback(async (stepIndex: number) => {
-    const targetStep = DEMO_SCENARIO_STEPS[stepIndex];
-    if (!targetStep) return;
-
-    setIsApplyingEvent(true);
-    try {
-      if (stepIndex === 0 || targetStep.eventType === "RESET") {
-        const resetData = await resetSimulationState();
-        if (resetData) setState(resetData);
-        setDemoStep(0);
-        setSelectedEntity({ type: null, id: null });
-        return;
+    // Asynchronously notify backend if active without blocking UI
+    const targetStep = DEMO_SCENARIO_STEPS[validStep];
+    if (targetStep) {
+      if (validStep === 0 || targetStep.eventType === "RESET") {
+        resetSimulationState().catch(() => {});
+      } else {
+        applySimulationEvent(targetStep.eventType, targetStep.payload).catch(() => {});
       }
-
-      // To guarantee true progressive disclosure with zero future-state leakage:
-      // Reset to baseline and apply all events sequentially from 1 to stepIndex
-      let cumulativeState = await resetSimulationState();
-      for (let i = 1; i <= stepIndex; i++) {
-        const step = DEMO_SCENARIO_STEPS[i];
-        if (step && step.eventType !== "RESET") {
-          const res = await applySimulationEvent(
-            step.eventType,
-            step.payload
-          );
-          if (res) cumulativeState = res;
-        }
-      }
-      if (cumulativeState) setState(cumulativeState);
-      setDemoStep(stepIndex);
-    } finally {
-      setIsApplyingEvent(false);
     }
   }, []);
 
@@ -129,7 +102,7 @@ export default function DashboardPage() {
     if (isDemoPlaying) {
       setIsDemoPlaying(false);
     } else {
-      // If at end, start from 0, otherwise resume
+      // If at end, start from 0, otherwise continue
       if (demoStep >= DEMO_SCENARIO_STEPS.length - 1) {
         executeDemoStep(0);
       }
@@ -156,46 +129,34 @@ export default function DashboardPage() {
     executeDemoStep(stepId);
   };
 
-  const handleResetSimulation = async () => {
+  const handleResetSimulation = () => {
     setIsDemoPlaying(false);
     setIsResetting(true);
-    try {
-      const resetData = await resetSimulationState();
-      if (resetData) {
-        setState(resetData);
-      }
-      setDemoStep(0);
-      setSelectedEntity({ type: null, id: null });
-    } finally {
-      setTimeout(() => {
-        setIsResetting(false);
-      }, 300);
-    }
+    executeDemoStep(0);
+    setSelectedEntity({ type: null, id: null });
+    setTimeout(() => {
+      setIsResetting(false);
+    }, 250);
   };
 
-  const handleApplyEvent = async (
-    eventType: string,
-    payload?: Record<string, unknown>
-  ) => {
+  const handleApplyEvent = (eventType: string) => {
     setIsApplyingEvent(true);
-    try {
-      const updatedState = await applySimulationEvent(
-        eventType as SimEventType,
-        payload as {
-          severity?: string;
-          description?: string;
-          rainfall_delta_mm?: number;
-          road_id?: string;
-          closure_reason?: string;
-          crowd_multiplier?: number;
-        }
-      );
-      if (updatedState) {
-        setState(updatedState);
-      }
-    } finally {
-      setIsApplyingEvent(false);
+    if (eventType === "START_EVACUATION") {
+      executeDemoStep(2);
+    } else if (eventType === "INCREASE_CROWD") {
+      executeDemoStep(3);
+    } else if (eventType === "BLOCK_ROAD") {
+      executeDemoStep(4);
+    } else if (eventType === "GROUND_REPORT_VERIFIED") {
+      executeDemoStep(5);
+    } else if (eventType === "CONFLICTING_REPORT") {
+      executeDemoStep(6);
+    } else if (eventType === "RESET") {
+      handleResetSimulation();
     }
+    setTimeout(() => {
+      setIsApplyingEvent(false);
+    }, 150);
   };
 
   const handleSelectEntity = (

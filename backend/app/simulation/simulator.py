@@ -223,7 +223,7 @@ class SimulationEngine:
 
         # 6. Progressive Hazard Zones
         hazard_zones: List[Dict[str, Any]] = []
-        if step >= 1:
+        if step >= 0:
             all_hazard_defs = self._scenario.get("hazard_zones", [])
             active_defs = all_hazard_defs if step >= 3 else [all_hazard_defs[0]]
             has_conflict = (step == 6)

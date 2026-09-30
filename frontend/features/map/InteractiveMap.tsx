@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { SimulationState } from "@/types/simulation";
 import { Layers, Eye, EyeOff, Shield, AlertTriangle, Users, Navigation } from "lucide-react";
 
@@ -20,6 +20,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
   const layerGroupsRef = useRef<{
     hazards?: any;
     roads?: any;
@@ -27,6 +28,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     shelters?: any;
     population?: any;
   }>({});
+
+  // Keep latest state & selectedEntity in refs so renderLayers always reads current values
+  const stateRef = useRef(state);
+  const selectedEntityRef = useRef(selectedEntity);
+  const onSelectEntityRef = useRef(onSelectEntity);
+  stateRef.current = state;
+  selectedEntityRef.current = selectedEntity;
+  onSelectEntityRef.current = onSelectEntity;
 
   const [visibleLayers, setVisibleLayers] = useState({
     hazards: true,
@@ -51,89 +60,17 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     });
   };
 
-  useEffect(() => {
-    let isMounted = true;
+  // Stable renderLayers that always reads from refs — never stale
+  const renderLayers = useCallback(() => {
+    const L = leafletRef.current;
+    if (!L) return;
 
-    async function initMap() {
-      if (!mapContainerRef.current || mapInstanceRef.current) return;
-
-      const L = (await import("leaflet")).default;
-
-      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
-
-      // Prevent Leaflet error if container was already initialized by another pass
-      const container = mapContainerRef.current as any;
-      if (container._leaflet_id) {
-        return;
-      }
-
-      // Pune center: [18.514, 73.838]
-      const map = L.map(container, {
-        center: [18.514, 73.838],
-        zoom: 13,
-        zoomControl: false,
-        attributionControl: false
-      });
-
-      if (!isMounted) {
-        map.remove();
-        return;
-      }
-
-      L.control.zoom({ position: "topleft" }).addTo(map);
-
-      L.control.attribution({ position: "bottomright", prefix: false })
-        .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors')
-        .addTo(map);
-
-      L.tileLayer(
-        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          opacity: 0.95,
-          className: "osm-dark-tiles"
-        }
-      ).addTo(map);
-
-      const hazardsGroup = L.layerGroup().addTo(map);
-      const roadsGroup = L.layerGroup().addTo(map);
-      const routesGroup = L.layerGroup().addTo(map);
-      const sheltersGroup = L.layerGroup().addTo(map);
-      const populationGroup = L.layerGroup().addTo(map);
-
-      layerGroupsRef.current = {
-        hazards: hazardsGroup,
-        roads: roadsGroup,
-        routes: routesGroup,
-        shelters: sheltersGroup,
-        population: populationGroup
-      };
-
-      mapInstanceRef.current = map;
-      renderLayers(L);
-    }
-
-    initMap();
-
-    return () => {
-      isMounted = false;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    import("leaflet").then((LModule) => {
-      renderLayers(LModule.default);
-    });
-  }, [state, selectedEntity]);
-
-  const renderLayers = (L: any) => {
     const { hazards, roads, routes, shelters, population } = layerGroupsRef.current;
     if (!hazards || !roads || !routes || !shelters || !population) return;
+
+    const currentState = stateRef.current;
+    const currentSelected = selectedEntityRef.current;
+    const selectEntity = onSelectEntityRef.current;
 
     hazards.clearLayers();
     roads.clearLayers();
@@ -142,10 +79,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     population.clearLayers();
 
     // 1. RENDER HAZARD ZONES (Polygons)
-    state.hazard_zones.forEach((zone) => {
+    currentState.hazard_zones.forEach((zone) => {
       const latLngs = zone.polygon_coordinates.map(([lng, lat]) => [lat, lng]);
       const isCritical = zone.severity === "CRITICAL";
-      const isSelected = selectedEntity.type === "hazard" && selectedEntity.id === zone.id;
+      const isSelected = currentSelected.type === "hazard" && currentSelected.id === zone.id;
 
       const polygon = L.polygon(latLngs, {
         color: isSelected ? "#ffffff" : isCritical ? "#ef4444" : "#eab308",
@@ -167,30 +104,30 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       );
 
       polygon.on("click", () => {
-        onSelectEntity("hazard", zone.id);
+        selectEntity("hazard", zone.id);
       });
 
       hazards.addLayer(polygon);
     });
 
     // 2. RENDER ROADS (Base Network)
-    state.roads.forEach((road) => {
+    currentState.roads.forEach((road) => {
       const latLngs = road.coordinates.map(([lng, lat]) => [lat, lng]);
-      const isSelected = selectedEntity.type === "road" && selectedEntity.id === road.id;
+      const isSelected = currentSelected.type === "road" && currentSelected.id === road.id;
 
-      let roadColor = "#334155"; // Base dark slate when routes are active
+      let roadColor = "#334155";
       let roadWeight = 3;
       let dashArray: string | undefined = undefined;
 
       if (road.is_blocked) {
-        roadColor = "#ef4444"; // Red Blocked
+        roadColor = "#ef4444";
         roadWeight = 5;
         dashArray = "6, 6";
       } else if (road.status === "CONGESTED") {
-        roadColor = "#fb923c"; // Orange Congested
+        roadColor = "#fb923c";
         roadWeight = 4;
       } else if (road.status === "CAUTION") {
-        roadColor = "#facc15"; // Yellow Caution
+        roadColor = "#facc15";
         roadWeight = 3.5;
       }
 
@@ -215,7 +152,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       );
 
       polyline.on("click", () => {
-        onSelectEntity("road", road.id);
+        selectEntity("road", road.id);
       });
 
       roads.addLayer(polyline);
@@ -248,25 +185,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         });
 
         const barrierMarker = L.marker(midPoint, { icon: barrierIcon });
-        barrierMarker.on("click", () => onSelectEntity("road", road.id));
+        barrierMarker.on("click", () => selectEntity("road", road.id));
         roads.addLayer(barrierMarker);
       }
     });
 
     // 3. RENDER EVACUATION ROUTES (Progressive: Active on Evacuation Dispatch)
-    const isEvacuationActive = state.system_state.evacuation_active ?? false;
-    const hasSelectedRoute = selectedEntity.type === "route" && selectedEntity.id !== null;
-    const hasSelectedPopulation = selectedEntity.type === "population" && selectedEntity.id !== null;
+    const isEvacuationActive = currentState.system_state.evacuation_active ?? false;
+    const hasSelectedRoute = currentSelected.type === "route" && currentSelected.id !== null;
+    const hasSelectedPopulation = currentSelected.type === "population" && currentSelected.id !== null;
 
-    if (isEvacuationActive && state.routes && state.routes.length > 0) {
-      state.routes.forEach((route) => {
+    if (isEvacuationActive && currentState.routes && currentState.routes.length > 0) {
+      currentState.routes.forEach((route) => {
         if (!route.coordinates || route.coordinates.length < 2) return;
         const latLngs = route.coordinates.map(([lng, lat]) => [lat, lng]);
         const isRec = route.is_recommended;
-        const isSelected = selectedEntity.type === "route" && selectedEntity.id === route.route_id;
-        const isClusterMatch = hasSelectedPopulation && selectedEntity.id === route.origin_cluster_id;
+        const isSelected = currentSelected.type === "route" && currentSelected.id === route.route_id;
+        const isClusterMatch = hasSelectedPopulation && currentSelected.id === route.origin_cluster_id;
 
-        // Visual distinction: Selected alternate route is prominent cyan, recommended route remains solid emerald
         let routeColor = isRec ? "#10b981" : "#38bdf8";
         let routeWeight = isRec ? 4.5 : 2.5;
         let dashArray: string | undefined = isRec ? undefined : "4, 4";
@@ -322,7 +258,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         );
 
         routeLine.on("click", () => {
-          onSelectEntity("route", route.route_id);
+          selectEntity("route", route.route_id);
         });
 
         routes.addLayer(routeLine);
@@ -330,8 +266,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
 
     // 4. RENDER SHELTERS (Markers)
-    state.shelters.forEach((shelter) => {
-      const isSelected = selectedEntity.type === "shelter" && selectedEntity.id === shelter.id;
+    currentState.shelters.forEach((shelter) => {
+      const isSelected = currentSelected.type === "shelter" && currentSelected.id === shelter.id;
       const isFull = shelter.status === "FULL" || shelter.status === "NEAR_CAPACITY";
       const isAvail = shelter.status === "AVAILABLE";
 
@@ -376,15 +312,15 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       `);
 
       marker.on("click", () => {
-        onSelectEntity("shelter", shelter.id);
+        selectEntity("shelter", shelter.id);
       });
 
       shelters.addLayer(marker);
     });
 
     // 5. RENDER POPULATION CLUSTERS
-    state.population_zones.forEach((pop) => {
-      const isSelected = selectedEntity.type === "population" && selectedEntity.id === pop.id;
+    currentState.population_zones.forEach((pop) => {
+      const isSelected = currentSelected.type === "population" && currentSelected.id === pop.id;
 
       const circle = L.circle([pop.latitude, pop.longitude], {
         radius: 400,
@@ -433,12 +369,96 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       );
 
       marker.on("click", () => {
-        onSelectEntity("population", pop.id);
+        selectEntity("population", pop.id);
       });
 
       population.addLayer(marker);
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initMap() {
+      if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+      const L = (await import("leaflet")).default;
+      leafletRef.current = L;
+
+      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
+
+      // Prevent Leaflet error if container was already initialized by another pass
+      const container = mapContainerRef.current as any;
+      if (container._leaflet_id) {
+        return;
+      }
+
+      // Pune center: [18.514, 73.838]
+      const map = L.map(container, {
+        center: [18.514, 73.838],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      if (!isMounted) {
+        map.remove();
+        return;
+      }
+
+      L.control.zoom({ position: "topleft" }).addTo(map);
+
+      L.control.attribution({ position: "bottomright", prefix: false })
+        .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors')
+        .addTo(map);
+
+      L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 19,
+          opacity: 0.95,
+          className: "osm-dark-tiles"
+        }
+      ).addTo(map);
+
+      const hazardsGroup = L.layerGroup().addTo(map);
+      const roadsGroup = L.layerGroup().addTo(map);
+      const routesGroup = L.layerGroup().addTo(map);
+      const sheltersGroup = L.layerGroup().addTo(map);
+      const populationGroup = L.layerGroup().addTo(map);
+
+      layerGroupsRef.current = {
+        hazards: hazardsGroup,
+        roads: roadsGroup,
+        routes: routesGroup,
+        shelters: sheltersGroup,
+        population: populationGroup
+      };
+
+      mapInstanceRef.current = map;
+      renderLayers();
+    }
+
+    initMap();
+
+    return () => {
+      isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      if (mapContainerRef.current) {
+        delete (mapContainerRef.current as any)._leaflet_id;
+      }
+    };
+  }, [renderLayers]);
+
+  // Synchronous re-render on state/selectedEntity change — no async import needed
+  useEffect(() => {
+    if (!mapInstanceRef.current || !leafletRef.current) return;
+    renderLayers();
+    mapInstanceRef.current.invalidateSize();
+  }, [state, selectedEntity, renderLayers]);
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden">
